@@ -1,20 +1,44 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# AI Xiaoming: Galactic Defense | AI Xiaoming: 星战防御
 
-# Run and deploy your AI Studio app
+A Star Wars inspired Missile Command game built with React, Vite, and Tailwind CSS.
 
-This contains everything you need to run your app locally.
+## Features
+- Star Wars themed space battlefield.
+- TIE Fighter-inspired enemy rockets.
+- Plasma bolt interceptors with infinite ammo.
+- Galactic Rebel Base defense (Bunkers and Shield Generators).
+- Responsive design for desktop and mobile.
 
-View your app in AI Studio: https://ai.studio/apps/5d30402b-0b5e-4c78-8252-629eadcc019b
+## Tech Stack
+- **Frontend:** React 19, Vite, TypeScript
+- **Styling:** Tailwind CSS 4
+- **Animations:** Motion (Framer Motion)
+- **Icons:** Lucide React
 
-## Run Locally
+## Deployment on Vercel
 
-**Prerequisites:**  Node.js
+1. **Push to GitHub:**
+   - Initialize a git repository: `git init`
+   - Add files: `git add .`
+   - Commit: `git commit -m "Initial commit"`
+   - Create a new repo on GitHub and follow the instructions to push your local repo.
 
+2. **Connect to Vercel:**
+   - Go to [Vercel](https://vercel.com).
+   - Click "New Project".
+   - Import your GitHub repository.
+   - Vercel will automatically detect Vite and configure the build settings.
+   - Click "Deploy".
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build for Production
+
+```bash
+npm run build
+```

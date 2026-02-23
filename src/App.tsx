@@ -82,28 +82,28 @@ export default function App() {
 
   const t = {
     zh: {
-      title: "AI Xiaoming新星防御",
-      start: "开始游戏",
-      score: "得分",
+      title: "AI Xiaoming: 星战防御",
+      start: "进入战场",
+      score: "战绩",
       target: "目标",
-      win: "防御成功！",
-      lose: "防线崩溃...",
-      playAgain: "再玩一次",
-      ammo: "弹药",
-      instructions: "点击屏幕拦截敌方火箭。保护你的城市和炮台。",
-      mission: "达到 1000 分以获得胜利"
+      win: "原力与你同在！",
+      lose: "基地已沦陷...",
+      playAgain: "再次出征",
+      ammo: "能量",
+      instructions: "点击屏幕发射等离子炮拦截敌机。保护反抗军基地。",
+      mission: "击落敌机达到 1000 分以获得胜利"
     },
     en: {
-      title: "AI Xiaoming Nova Defense",
-      start: "Start Game",
+      title: "AI Xiaoming: Galactic Defense",
+      start: "Enter Battle",
       score: "Score",
       target: "Target",
-      win: "Defense Successful!",
-      lose: "Defense Collapsed...",
-      playAgain: "Play Again",
-      ammo: "Ammo",
-      instructions: "Click to intercept enemy rockets. Protect your cities and towers.",
-      mission: "Reach 1000 points to win"
+      win: "May the Force be with you!",
+      lose: "Base Overrun...",
+      playAgain: "Deploy Again",
+      ammo: "Energy",
+      instructions: "Tap to fire plasma bolts at enemy fighters. Protect the Rebel Base.",
+      mission: "Reach 1000 points to secure the sector"
     }
   }[lang];
 
@@ -296,9 +296,18 @@ export default function App() {
       ctx.closePath();
       ctx.fill();
 
+      // Glowing Core
+      ctx.fillStyle = '#60a5fa';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#3b82f6';
+      ctx.beginPath();
+      ctx.arc(0, -6, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
       // Slit/Window
       ctx.fillStyle = '#111827';
-      ctx.fillRect(-10, -8, 20, 3);
+      ctx.fillRect(-10, -8, 20, 2);
 
       // Antenna
       ctx.strokeStyle = '#9ca3af';
@@ -416,11 +425,7 @@ export default function App() {
       
       ctx.restore();
       
-      // Ammo indicator
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(tower.ammo.toString(), tower.x, tower.y + 45);
+      // Ammo indicator removed (Infinite)
     });
 
     // Rockets
@@ -456,30 +461,23 @@ export default function App() {
       ctx.lineTo(4, 10);
       ctx.fill();
 
-      // Rocket Body
-      ctx.fillStyle = '#94a3b8'; // Slate-400
+      // Rocket Body (TIE Fighter-ish)
+      ctx.fillStyle = '#1f2937'; // Dark
+      // Central pod
       ctx.beginPath();
-      ctx.roundRect(-4, -16, 8, 32, 2);
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
       ctx.fill();
+      // Wings
+      ctx.fillRect(-12, -10, 2, 20);
+      ctx.fillRect(10, -10, 2, 20);
+      // Connectors
+      ctx.fillRect(-10, -1, 4, 2);
+      ctx.fillRect(6, -1, 4, 2);
 
-      // Nose cone
-      ctx.fillStyle = '#ef4444'; // Red-500
+      // Red eye
+      ctx.fillStyle = '#ef4444';
       ctx.beginPath();
-      ctx.moveTo(-4, -16);
-      ctx.quadraticCurveTo(0, -28, 4, -16);
-      ctx.fill();
-
-      // Fins
-      ctx.fillStyle = '#475569'; // Slate-600
-      ctx.beginPath();
-      ctx.moveTo(-4, 8);
-      ctx.lineTo(-10, 16);
-      ctx.lineTo(-4, 16);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(4, 8);
-      ctx.lineTo(10, 16);
-      ctx.lineTo(4, 16);
+      ctx.arc(0, 0, 2, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
@@ -491,8 +489,9 @@ export default function App() {
       const curY = inter.startY + (inter.targetY - inter.startY) * inter.progress;
       const angle = Math.atan2(inter.targetY - inter.startY, inter.targetX - inter.startX);
 
-      // Trail
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      // Trail (Laser beam)
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(inter.startX, inter.startY);
       ctx.lineTo(curX, curY);
@@ -502,19 +501,19 @@ export default function App() {
       ctx.translate(curX, curY);
       ctx.rotate(angle + Math.PI / 2);
 
-      // Interceptor Body (Smaller, sleeker)
-      ctx.fillStyle = '#f8fafc';
+      // Interceptor Body (Plasma Bolt)
+      const boltGrad = ctx.createLinearGradient(0, -10, 0, 10);
+      boltGrad.addColorStop(0, '#00ffff');
+      boltGrad.addColorStop(1, '#3b82f6');
+      ctx.fillStyle = boltGrad;
       ctx.beginPath();
-      ctx.roundRect(-3, -10, 6, 20, 2);
+      ctx.roundRect(-2, -15, 4, 30, 2);
       ctx.fill();
       
-      // Nose
-      ctx.fillStyle = '#3b82f6';
-      ctx.beginPath();
-      ctx.moveTo(-3, -10);
-      ctx.lineTo(0, -18);
-      ctx.lineTo(3, -10);
-      ctx.fill();
+      // Glow
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#3b82f6';
+      ctx.stroke();
 
       ctx.restore();
 
@@ -583,15 +582,14 @@ export default function App() {
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
-    // Find best tower to fire from (closest with ammo)
+    // Find best tower to fire from (closest alive)
     const availableTowers = towersRef.current
-      .filter(t => t.alive && t.ammo > 0)
+      .filter(t => t.alive)
       .sort((a, b) => distance({ x, y }, a) - distance({ x, y }, b));
 
     if (availableTowers.length > 0) {
       const tower = availableTowers[0];
-      const burstSize = Math.min(5, tower.ammo);
-      tower.ammo -= burstSize;
+      const burstSize = 5;
       
       for (let i = 0; i < burstSize; i++) {
         // Add a small random offset to the target for each missile in the burst
@@ -640,7 +638,7 @@ export default function App() {
       ref={containerRef}
       className="relative w-full h-screen bg-black overflow-hidden font-sans select-none touch-none"
       style={{
-        backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1506466010722-395aa2bef877?auto=format&fit=crop&w=1920&q=80")',
+        backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=80")',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
@@ -680,18 +678,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Ammo HUD (Bottom) */}
+      {/* Ammo HUD (Bottom) - Removed for Infinite Ammo */}
       <div className="absolute bottom-10 left-0 w-full flex justify-center gap-8 pointer-events-none">
-        {towersRef.current.map(tower => (
-          <div key={tower.id} className="flex flex-col items-center">
-             <div className={`w-12 h-1 bg-white/20 rounded-full overflow-hidden mb-1 ${!tower.alive ? 'opacity-0' : ''}`}>
-                <div 
-                  className="h-full bg-red-500 transition-all duration-300" 
-                  style={{ width: `${(tower.ammo / tower.maxAmmo) * 100}%` }}
-                />
-             </div>
-          </div>
-        ))}
       </div>
 
       {/* Overlays */}
@@ -713,7 +701,7 @@ export default function App() {
                   {t.title}
                 </h1>
                 <p className="text-blue-400 font-medium tracking-widest uppercase text-sm">
-                  AI Xiaoming Nova Defense
+                  AI Xiaoming: Galactic Defense
                 </p>
               </motion.div>
 
