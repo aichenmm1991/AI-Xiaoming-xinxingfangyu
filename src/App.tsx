@@ -10,7 +10,7 @@ import { Shield, Target, Trophy, RotateCcw, Info, Zap } from 'lucide-react';
 // --- Constants & Types ---
 
 const TARGET_SCORE = 1000;
-const INITIAL_AMMO = [40, 40, 80, 40, 40];
+const INITIAL_AMMO = [100, 100, 100, 100, 100];
 
 type GameState = 'START' | 'PLAYING' | 'WON' | 'LOST';
 
@@ -151,7 +151,7 @@ export default function App() {
 
     // 1. Spawn Rockets
     spawnTimerRef.current += delta;
-    const spawnRate = Math.max(266, 1000 - (score / 100) * 66); 
+    const spawnRate = Math.max(133, (1000 - (score / 100) * 66) / 2); 
     if (spawnTimerRef.current > spawnRate) {
       spawnTimerRef.current = 0;
       const { width } = dimensionsRef.current;
@@ -425,7 +425,11 @@ export default function App() {
       
       ctx.restore();
       
-      // Ammo indicator removed (Infinite)
+      // Ammo indicator
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(tower.ammo.toString(), tower.x, tower.y + 45);
     });
 
     // Rockets
@@ -582,19 +586,26 @@ export default function App() {
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
-    // Find best tower to fire from (closest alive)
+    // Find best tower to fire from (closest with ammo)
     const availableTowers = towersRef.current
-      .filter(t => t.alive)
+      .filter(t => t.alive && t.ammo > 0)
       .sort((a, b) => distance({ x, y }, a) - distance({ x, y }, b));
 
     if (availableTowers.length > 0) {
       const tower = availableTowers[0];
-      const burstSize = 5;
+      const burstSize = Math.min(5, tower.ammo);
+      tower.ammo -= burstSize;
       
+      const baseAngle = Math.atan2(y - tower.y, x - tower.x);
+      const dist = distance({ x, y }, tower);
+      const angleStep = 15 * (Math.PI / 180); // 15 degrees in radians
+
       for (let i = 0; i < burstSize; i++) {
-        // Add a small random offset to the target for each missile in the burst
-        const offsetX = (Math.random() - 0.5) * 30;
-        const offsetY = (Math.random() - 0.5) * 30;
+        // Calculate angle for each missile in the fan (centered on baseAngle)
+        const angle = baseAngle + (i - (burstSize - 1) / 2) * angleStep;
+        
+        const targetX = tower.x + Math.cos(angle) * dist;
+        const targetY = tower.y + Math.sin(angle) * dist;
 
         interceptorsRef.current.push({
           id: Math.random().toString(36).substr(2, 9),
@@ -602,10 +613,10 @@ export default function App() {
           startY: tower.y,
           x: tower.x,
           y: tower.y,
-          targetX: x + offsetX,
-          targetY: y + offsetY,
+          targetX: targetX,
+          targetY: targetY,
           progress: 0,
-          speed: 0.12 + Math.random() * 0.05 // Vary speed slightly for more natural look
+          speed: 0.12 + Math.random() * 0.03 // Slight speed variation
         });
       }
     }
@@ -678,8 +689,18 @@ export default function App() {
         </div>
       </div>
 
-      {/* Ammo HUD (Bottom) - Removed for Infinite Ammo */}
+      {/* Ammo HUD (Bottom) */}
       <div className="absolute bottom-10 left-0 w-full flex justify-center gap-8 pointer-events-none">
+        {towersRef.current.map(tower => (
+          <div key={tower.id} className="flex flex-col items-center">
+             <div className={`w-12 h-1 bg-white/20 rounded-full overflow-hidden mb-1 ${!tower.alive ? 'opacity-0' : ''}`}>
+                <div 
+                  className="h-full bg-blue-500 transition-all duration-300" 
+                  style={{ width: `${(tower.ammo / tower.maxAmmo) * 100}%` }}
+                />
+             </div>
+          </div>
+        ))}
       </div>
 
       {/* Overlays */}
