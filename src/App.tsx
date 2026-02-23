@@ -107,6 +107,83 @@ export default function App() {
     }
   }[lang];
 
+  // --- Audio Synthesis ---
+
+  const playExplosionSound = useCallback(() => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      const noiseNode = audioCtx.createBufferSource();
+      
+      // Create white noise for the explosion "crunch"
+      const bufferSize = audioCtx.sampleRate * 0.5;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      
+      noiseNode.buffer = buffer;
+      
+      // Filter for the explosion thump
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.4);
+      
+      noiseNode.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      noiseNode.start();
+      noiseNode.stop(audioCtx.currentTime + 0.5);
+      
+      // Clean up context after sound finishes
+      setTimeout(() => {
+        audioCtx.close();
+      }, 600);
+    } catch (e) {
+      console.error('Audio error:', e);
+    }
+  }, []);
+
+  const playLaserSound = useCallback(() => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+      
+      setTimeout(() => {
+        audioCtx.close();
+      }, 200);
+    } catch (e) {
+      console.error('Audio error:', e);
+    }
+  }, []);
+
   // --- Initialization ---
 
   const initGame = useCallback(() => {
@@ -192,6 +269,7 @@ export default function App() {
           expanding: true,
           life: 1
         });
+        playExplosionSound();
 
         rocketsRef.current.splice(i, 1);
         
@@ -215,6 +293,7 @@ export default function App() {
           expanding: true,
           life: 1
         });
+        playExplosionSound();
         interceptorsRef.current.splice(i, 1);
       }
     }
@@ -258,6 +337,7 @@ export default function App() {
             expanding: true,
             life: 1
           });
+          playExplosionSound();
         }
       }
     }
@@ -339,22 +419,33 @@ export default function App() {
       ctx.arc(0, 0, 24, Math.PI, 0);
       ctx.fill();
 
-      // Barrel (pointing up slightly)
+      // Barrel (Laser Emitter)
       ctx.strokeStyle = '#1f2937'; // Gray-800
-      ctx.lineWidth = 12;
-      ctx.lineCap = 'round';
+      ctx.lineWidth = 14;
+      ctx.lineCap = 'butt';
       ctx.beginPath();
       ctx.moveTo(0, -10);
-      ctx.lineTo(0, -50);
+      ctx.lineTo(0, -55);
       ctx.stroke();
 
-      // Barrel detail
-      ctx.strokeStyle = '#4b5563';
-      ctx.lineWidth = 4;
+      // Glowing Rings on Barrel
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-8, -25 - i * 10);
+        ctx.lineTo(8, -25 - i * 10);
+        ctx.stroke();
+      }
+
+      // Muzzle Glow
+      ctx.fillStyle = '#60a5fa';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#3b82f6';
       ctx.beginPath();
-      ctx.moveTo(-4, -20);
-      ctx.lineTo(-4, -44);
-      ctx.stroke();
+      ctx.arc(0, -55, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
 
       ctx.restore();
 
@@ -493,9 +584,17 @@ export default function App() {
       const curY = inter.startY + (inter.targetY - inter.startY) * inter.progress;
       const angle = Math.atan2(inter.targetY - inter.startY, inter.targetX - inter.startX);
 
-      // Trail (Laser beam)
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
-      ctx.lineWidth = 2;
+      // Laser Beam (Core)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(inter.startX, inter.startY);
+      ctx.lineTo(curX, curY);
+      ctx.stroke();
+
+      // Laser Beam (Outer Glow)
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(inter.startX, inter.startY);
       ctx.lineTo(curX, curY);
@@ -505,20 +604,14 @@ export default function App() {
       ctx.translate(curX, curY);
       ctx.rotate(angle + Math.PI / 2);
 
-      // Interceptor Body (Plasma Bolt)
-      const boltGrad = ctx.createLinearGradient(0, -10, 0, 10);
-      boltGrad.addColorStop(0, '#00ffff');
-      boltGrad.addColorStop(1, '#3b82f6');
-      ctx.fillStyle = boltGrad;
+      // Laser Head (Pulse)
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#00ffff';
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.roundRect(-2, -15, 4, 30, 2);
+      ctx.ellipse(0, 0, 4, 12, 0, 0, Math.PI * 2);
       ctx.fill();
       
-      // Glow
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = '#3b82f6';
-      ctx.stroke();
-
       ctx.restore();
 
       // Target X
@@ -596,6 +689,8 @@ export default function App() {
       const burstSize = Math.min(5, tower.ammo);
       tower.ammo -= burstSize;
       
+      playLaserSound();
+      
       const baseAngle = Math.atan2(y - tower.y, x - tower.x);
       const dist = distance({ x, y }, tower);
       const angleStep = 15 * (Math.PI / 180); // 15 degrees in radians
@@ -616,7 +711,7 @@ export default function App() {
           targetX: targetX,
           targetY: targetY,
           progress: 0,
-          speed: 0.12 + Math.random() * 0.03 // Slight speed variation
+          speed: 0.25 + Math.random() * 0.05 // Faster speed for laser feel
         });
       }
     }
